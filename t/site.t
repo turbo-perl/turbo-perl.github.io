@@ -114,10 +114,11 @@ foreach my $page (@pages)
 
 subtest 'assets' => sub {
 
+  # the types for these two depend on the version of Plack
   my %assets = (
     '/css/turboperl.css'               => 'text/css',
-    '/js/turboperl.js'                 => 'application/javascript',
-    '/fonts/WebPlus_IBM_VGA_8x16.woff' => 'application/font-woff',
+    '/js/turboperl.js'                 => match(qr{^(?:application|text)/javascript$}),
+    '/fonts/WebPlus_IBM_VGA_8x16.woff' => match(qr{^(?:application/font-woff|font/woff)$}),
     '/fonts/LICENSE.txt'               => 'text/plain',
   );
 
