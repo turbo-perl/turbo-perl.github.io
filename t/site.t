@@ -107,6 +107,7 @@ foreach my $page (@pages)
       ok $dom->at('#clock'), 'clock';
       ok exists $dom->at('#dos')->attr->{hidden}, 'DOS prompt is hidden until exit';
       like $dom->at('#dos')->all_text, qr/^C:\\>/, 'DOS prompt';
+      ok $dom->at('#dos > #dos-line > #dos-input'), 'with somewhere to type a command';
     };
 
     subtest 'assets' => sub {

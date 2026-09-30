@@ -540,7 +540,15 @@ body {
   z-index: 100;
   background: var(--black);
   color: var(--light-grey);
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   cursor: none;
+}
+
+/* an empty line of output is still a line */
+#dos div {
+  min-height: 1em;
 }
 
 body.tv-dos {

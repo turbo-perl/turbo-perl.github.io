@@ -330,14 +330,63 @@
       if (win) location.href = '/404.html';
     },
 
-    // leave for the DOS prompt; only loading the page again comes back
-    exit() {
-      closeMenu();
-      state.dos = true;
-      document.body.classList.add('tv-dos');
-      $('#dos').hidden = false;
-    },
+    // leave for the DOS prompt
+    exit() { dos.enter(); },
   };
+
+  // ---- DOS ---------------------------------------------------------------
+
+  // What is left after exit: a prompt that knows one command, the one that
+  // starts the IDE again.  What was typed stays on the screen for the next
+  // time, as it would.
+  const dos = (function () {
+    const el     = $('#dos');
+    const line   = $('#dos-line');
+    const input  = $('#dos-input');
+    const prompt = line.firstChild.textContent;
+    const LIMIT  = 127;   // as long as a DOS command line gets
+
+    const print = (text) => line.before(create('div', '', text));
+
+    function show(on) {
+      state.dos = on;
+      document.body.classList.toggle('tv-dos', on);
+      el.hidden = !on;
+    }
+
+    function run() {
+      const command = input.textContent;
+      const name    = command.trim().split(/\s+/)[0];
+      // DOS finds the program with or without its extension
+      const ide     = /^turboperl(\.exe)?$/i.test(name);
+      print(prompt + command);
+      input.textContent = '';
+      if (!name) return;
+      if (!ide) print('Bad command or file name');
+      print('');
+      if (ide) show(false);
+    }
+
+    return {
+      enter() {
+        closeMenu();
+        show(true);
+        el.scrollTop = el.scrollHeight;
+      },
+      key(e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const typed = input.textContent;
+        if (e.key === 'Enter') run();
+        else if (e.key === 'Backspace') input.textContent = typed.slice(0, -1);
+        else if (e.key === 'Escape') input.textContent = '';
+        else if (e.key.length === 1) input.textContent = (typed + e.key).slice(0, LIMIT);
+        else if (e.key !== 'Tab') return;
+        e.preventDefault();
+        // keep the prompt on the screen once the output has filled it
+        el.scrollTop = el.scrollHeight;
+      },
+    };
+  })();
 
   // ---- menus -------------------------------------------------------------
 
@@ -530,7 +579,8 @@
   // The keys are the ones the app uses.  Some of them belong to the browser
   // or the window manager first, in which case they never arrive here.
   document.addEventListener('keydown', (e) => {
-    if (state.dos || e.ctrlKey || e.metaKey) return;
+    if (state.dos) return dos.key(e);
+    if (e.ctrlKey || e.metaKey) return;
 
     const letter = /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : '';
 
