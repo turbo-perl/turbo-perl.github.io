@@ -1,0 +1,558 @@
+/*
+ * The screen is a grid of character cells, as it is in the app.  The font is
+ * an 8x16 VGA face, so with a line height of 1 a cell is 0.5em wide and 1em
+ * tall, and everything here is sized and placed in those units.  The script
+ * picks the font size and the number of rows and columns.
+ */
+
+@font-face {
+  font-family: "IBM VGA 8x16";
+  src: url("/fonts/WebPlus_IBM_VGA_8x16.woff") format("woff");
+  font-display: block;
+}
+
+:root {
+  /* the sixteen colours of the text mode palette that the app uses */
+  --black:       #000000;
+  --blue:        #0000aa;
+  --green:       #00aa00;
+  --cyan:        #00aaaa;
+  --red:         #aa0000;
+  --light-grey:  #aaaaaa;
+  --dark-grey:   #555555;
+  --light-green: #55ff55;
+  --light-cyan:  #55ffff;
+  --yellow:      #ffff55;
+  --white:       #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  /* the part cells left over at the edge of the browser window blend in
+     with the menu bar and the status line */
+  background: var(--light-grey);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#screen {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  font-family: "IBM VGA 8x16", monospace;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: normal;
+  font-style: normal;
+  font-variant-ligatures: none;
+  white-space: nowrap;
+  color: var(--black);
+  background: var(--light-grey);
+  cursor: default;
+  user-select: none;
+}
+
+.tv-hot {
+  color: var(--red);
+}
+
+/* menu bar */
+
+#menubar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 1em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  z-index: 30;
+}
+
+.tv-menu {
+  position: relative;
+}
+
+.tv-menu-title {
+  display: block;
+  padding: 0 0.5em;
+}
+
+.tv-menu.tv-selected > .tv-menu-title,
+.tv-menu-items li.tv-selected > a {
+  background: var(--green);
+}
+
+.tv-menu-items {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 1em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--light-grey);
+}
+
+.tv-menu.tv-open > .tv-menu-items {
+  display: block;
+}
+
+.tv-menu-items li:not(.tv-shadow) {
+  display: flex;
+  height: 1em;
+  white-space: pre;
+}
+
+.tv-menu-items a {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.5em;
+  color: inherit;
+  text-decoration: none;
+  cursor: default;
+  outline: none;
+}
+
+.tv-menu-label {
+  margin-right: 0.5em;
+}
+
+.tv-menu-shortcut {
+  margin-left: 1em;
+}
+
+#clock {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 1em;
+  z-index: 31;
+}
+
+/* status line */
+
+#statusline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1em;
+  display: flex;
+  z-index: 30;
+}
+
+#statusline a {
+  padding: 0 0.5em;
+  color: inherit;
+  text-decoration: none;
+  cursor: default;
+  outline: none;
+}
+
+#statusline a:active {
+  background: var(--green);
+}
+
+/* desktop */
+
+#desktop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 1em;
+  bottom: 1em;
+  overflow: hidden;
+}
+
+#desktop-pattern {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: pre;
+  color: var(--blue);
+}
+
+/* windows and dialogs: the frame is drawn in the cells around the edge */
+
+.tv-window,
+.tv-dialog {
+  position: absolute;
+}
+
+.tv-window {
+  background: var(--blue);
+  color: var(--light-grey);
+  z-index: 10;
+}
+
+.tv-dialog {
+  background: var(--light-grey);
+  color: var(--black);
+  padding: 1em 0.5em;
+  z-index: 20;
+}
+
+.tv-frame {
+  position: absolute;
+  overflow: hidden;
+  white-space: pre;
+  color: var(--white);
+}
+
+.tv-inactive > .tv-frame {
+  color: var(--light-grey);
+}
+
+.tv-frame-top,
+.tv-frame-bottom {
+  left: 0;
+  right: 0;
+  height: 1em;
+  display: flex;
+}
+
+.tv-frame-top {
+  top: 0;
+}
+
+.tv-frame-bottom {
+  bottom: 0;
+}
+
+.tv-frame-left,
+.tv-frame-right {
+  top: 1em;
+  bottom: 1em;
+  width: 0.5em;
+}
+
+.tv-frame-left {
+  left: 0;
+}
+
+.tv-frame-right {
+  right: 0;
+}
+
+.tv-fill {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tv-frame .tv-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0 0.5em;
+  overflow: hidden;
+}
+
+.tv-icon > span {
+  color: var(--light-green);
+}
+
+.tv-inactive .tv-icon,
+.tv-inactive .tv-scrollbar,
+.tv-window:not(.tv-inactive) .tv-frame-right > .tv-side {
+  display: none;
+}
+
+.tv-resize {
+  cursor: nwse-resize;
+}
+
+/* the shadow a window casts over what is two columns right and a row down */
+
+.tv-shadow {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: grayscale(1);
+  pointer-events: none;
+}
+
+.tv-shadow-right {
+  left: 100%;
+  top: 1em;
+  width: 1em;
+  height: 100%;
+}
+
+.tv-shadow-bottom {
+  left: 1em;
+  top: 100%;
+  width: calc(100% - 1em);
+  height: 1em;
+}
+
+/* scroll bar, in place of the right hand edge of the frame */
+
+.tv-scrollbar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--cyan);
+  color: var(--blue);
+}
+
+.tv-scrollbar-track {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.tv-scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* the document inside the window */
+
+.tv-window > .tv-content {
+  position: absolute;
+  inset: 1em 0.5em;
+  overflow: hidden;
+  padding: 0 1em;
+  white-space: normal;
+  overflow-wrap: break-word;
+  cursor: auto;
+  user-select: text;
+}
+
+/* a blank row above and below the document */
+.tv-window > .tv-content::before,
+.tv-window > .tv-content::after {
+  content: "";
+  display: block;
+  height: 1em;
+}
+
+.tv-content ::selection {
+  background: var(--light-grey);
+  color: var(--blue);
+}
+
+.tv-content :is(h2, h3, h4, h5, h6) {
+  margin: 1em 0;
+  font: inherit;
+  color: var(--white);
+}
+
+.tv-content h2 {
+  text-transform: uppercase;
+}
+
+.tv-content :is(p, ul, ol, pre, table, blockquote, hr) {
+  margin: 1em 0;
+}
+
+.tv-window > .tv-content > :first-child {
+  margin-top: 0;
+}
+
+.tv-window > .tv-content > :last-child {
+  margin-bottom: 0;
+}
+
+.tv-content :is(ul, ol) :is(ul, ol) {
+  margin: 0;
+}
+
+.tv-content ul {
+  padding-left: 1em;
+  list-style: none;
+}
+
+.tv-content ul > li {
+  position: relative;
+}
+
+.tv-content ul > li::before {
+  content: "\25A0";
+  position: absolute;
+  left: -1em;
+  color: var(--cyan);
+}
+
+.tv-content ol {
+  padding-left: 2em;
+}
+
+.tv-content li > p {
+  margin: 0;
+}
+
+.tv-window a {
+  color: var(--yellow);
+  text-decoration: none;
+  outline: none;
+}
+
+.tv-window a:hover,
+.tv-window a:focus-visible {
+  background: var(--cyan);
+  color: var(--black);
+}
+
+.tv-content strong {
+  font-weight: normal;
+  color: var(--white);
+}
+
+.tv-content em {
+  font-style: normal;
+  color: var(--light-green);
+}
+
+.tv-content code {
+  font: inherit;
+  color: var(--light-cyan);
+}
+
+.tv-content pre {
+  padding: 0 0.5em;
+  background: var(--black);
+  color: var(--light-grey);
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+.tv-content pre code {
+  color: inherit;
+}
+
+.tv-content blockquote {
+  padding-left: 1em;
+  color: var(--light-cyan);
+}
+
+.tv-content table {
+  border-collapse: collapse;
+}
+
+.tv-content :is(th, td) {
+  padding: 0 1em 0 0;
+  text-align: left;
+  vertical-align: top;
+  font-weight: normal;
+}
+
+.tv-content th {
+  color: var(--white);
+}
+
+.tv-content hr {
+  height: 1em;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.tv-content hr::before {
+  content: "\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500\2500";
+}
+
+.tv-content img {
+  max-width: 100%;
+}
+
+/* dialog */
+
+.tv-dialog {
+  width: 27em;
+}
+
+.tv-dialog > .tv-content {
+  padding: 0 0.5em;
+  white-space: normal;
+  text-align: center;
+}
+
+.tv-button {
+  position: relative;
+  margin: 0 0 1em;
+  padding: 0 1.5em;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  line-height: 1;
+  background: var(--green);
+  color: var(--white);
+  cursor: default;
+  outline: none;
+}
+
+.tv-button .tv-hot {
+  color: var(--yellow);
+}
+
+.tv-button::before,
+.tv-button::after {
+  position: absolute;
+  color: var(--black);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.tv-button::before {
+  content: "\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580\2580";
+  left: 0.5em;
+  top: 1em;
+  width: 100%;
+  text-align: left;
+}
+
+.tv-button::after {
+  content: "\2584";
+  left: 100%;
+  top: 0;
+}
+
+/* a pressed button moves into the space its shadow took */
+.tv-button:active {
+  left: 0.5em;
+}
+
+.tv-button:active::before,
+.tv-button:active::after {
+  display: none;
+}
+
+/* what is left after exit */
+
+#dos {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  background: var(--black);
+  color: var(--light-grey);
+  cursor: none;
+}
+
+body.tv-dos {
+  background: var(--black);
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.tv-cursor {
+  animation: tv-blink 1s step-end infinite;
+}
+
+@keyframes tv-blink {
+  50% { opacity: 0; }
+}
