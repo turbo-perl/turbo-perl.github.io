@@ -120,6 +120,10 @@ foreach my $page (@pages)
         [ $dom->find('script[src]')->map(attr => 'src')->each ],
         [ '/js/turboperl.js' ],
         'script';
+      is
+        [ $dom->find('link[rel=icon]')->map(attr => 'href')->each ],
+        [ '/favicon.ico', '/favicon.svg' ],
+        'favicon';
     };
 
   };
@@ -133,6 +137,8 @@ subtest 'assets' => sub {
     '/js/turboperl.js'                 => match(qr{^(?:application|text)/javascript$}),
     '/fonts/WebPlus_IBM_VGA_8x16.woff' => match(qr{^(?:application/font-woff|font/woff)$}),
     '/fonts/LICENSE.txt'               => 'text/plain',
+    '/favicon.ico'                     => match(qr{^image/(?:x-icon|vnd\.microsoft\.icon)$}),
+    '/favicon.svg'                     => 'image/svg+xml',
   );
 
   foreach my $url (sort keys %assets)
