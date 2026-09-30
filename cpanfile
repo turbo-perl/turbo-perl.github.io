@@ -4,6 +4,7 @@ requires 'Plack';
 requires 'Plack::Builder';
 requires 'Plack::App::GitHubPages::Faux';
 requires 'Plack::Middleware::Headers';
+requires 'YAML::PP';
 
 on test => sub {
   requires 'HTTP::Request::Common';

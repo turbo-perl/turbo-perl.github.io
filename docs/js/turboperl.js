@@ -118,7 +118,8 @@
 
   // ---- the document window ---------------------------------------------
 
-  const win = (function () {
+  // a page that is only a dialog has no window
+  const win = $('#window') && (function () {
     const el      = $('#window');
     const content = $('.tv-content', el);
     const f       = frame(el, { resizable: true });
@@ -295,7 +296,7 @@
     function close() {
       el.hidden = true;
       state.modal = null;
-      win.setActive(true);
+      if (win) win.setActive(true);
     }
 
     let from;
@@ -310,13 +311,14 @@
         closeMenu();
         el.hidden = false;
         state.modal = this;
-        win.setActive(false);
+        if (win) win.setActive(false);
         centre();
       },
     };
   }
 
-  const about = dialog($('#about'));
+  const dialogs = Array.from(document.querySelectorAll('.tv-dialog'), dialog);
+  const about   = dialogs.find((d) => d.el.id === 'about');
 
   // ---- commands ----------------------------------------------------------
 
@@ -325,8 +327,7 @@
 
     // closing the window leaves nothing to show
     close() {
-      if (document.body.dataset.page === '404') location.reload();
-      else location.href = '/404.html';
+      if (win) location.href = '/404.html';
     },
 
     // leave for the DOS prompt; only loading the page again comes back
@@ -566,7 +567,7 @@
       return;
     }
 
-    if (e.shiftKey) return;
+    if (e.shiftKey || !win) return;
 
     switch (e.key) {
       case 'F5':        win.zoom(); break;
@@ -613,10 +614,14 @@
     rows = screenRows - 2;
     pattern.textContent = ('░'.repeat(cols) + '\n').repeat(rows);
 
-    win.layout();
-    about.layout();
+    if (win) win.layout();
+    dialogs.forEach((d) => d.layout());
   }
 
   window.addEventListener('resize', layout);
   layout();
+
+  // a page that is a dialog starts with it up
+  const first = dialogs.find((d) => d.el.hasAttribute('data-open'));
+  if (first) first.open();
 })();

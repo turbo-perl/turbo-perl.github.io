@@ -17,16 +17,16 @@ Test2::Tools::HTTP::Tx->add_helper(
 app_add do "./test.psgi";
 
 my @pages = (
-  # url            code  page   title
-  [ '/',           200, 'index', 'TurboPerl IDE'              ],
-  [ '/index.html', 200, 'index', 'TurboPerl IDE'              ],
-  [ '/404.html',   200, '404',   'TurboPerl IDE - Not Found!' ],
-  [ '/bogus/url',  404, '404',   'TurboPerl IDE - Not Found!' ],
+  # url            code  page     title            message, for a page that is a dialog
+  [ '/',           200, 'index', 'TurboPerl IDE' ],
+  [ '/index.html', 200, 'index', 'TurboPerl IDE' ],
+  [ '/404.html',   200, '404',   'Error',         qr/stale or broken link/ ],
+  [ '/bogus/url',  404, '404',   'Error',         qr/stale or broken link/ ],
 );
 
 foreach my $page (@pages)
 {
-  my($url, $code, $name, $title) = @$page;
+  my($url, $code, $name, $title, $message) = @$page;
 
   subtest $url => sub {
 
@@ -42,11 +42,24 @@ foreach my $page (@pages)
 
     is $dom->at('body')->attr('data-page'), $name, 'page name';
 
-    subtest 'title' => sub {
-      is $dom->at('head > title')->text, $title, 'title of the document';
-      is $dom->at('#window > .tv-title')->text, $title, 'title in the frame of the window';
-      is $dom->find('h1')->size, 0, 'and not in the window';
-    };
+    is $dom->at('head > title')->text, $title, 'title of the document';
+    is $dom->find('h1')->size, 0, 'which is not repeated in the page';
+
+    subtest 'window' => sub {
+      is $dom->at('#desktop > #window.tv-window > .tv-title')->text, $title, 'title in the frame';
+      ok $dom->at('#window > .tv-content'), 'document is in the window';
+      ok !$dom->at('.tv-dialog[data-open]'), 'no dialog to start with';
+    } unless $message;
+
+    subtest 'dialog' => sub {
+      my $dialog = $dom->at('#desktop > #dialog.tv-dialog');
+      ok exists $dialog->attr->{'data-open'}, 'open to start with';
+      ok !exists $dialog->attr->{hidden}, 'and not hidden';
+      is $dialog->at('.tv-title')->text, $title, 'title in the frame';
+      like $dialog->at('.tv-content > p')->text, $message, 'message';
+      is $dialog->at('button')->all_text, 'Ok', 'button';
+      ok !$dom->at('#window'), 'no window behind it';
+    } if $message;
 
     subtest 'menus' => sub {
       my @menus = $dom->find('#menubar > .tv-menu')->each;
@@ -92,7 +105,6 @@ foreach my $page (@pages)
 
     subtest 'screen' => sub {
       ok $dom->at('#clock'), 'clock';
-      ok $dom->at('#desktop > #window.tv-window > .tv-content'), 'document is in the window';
       ok exists $dom->at('#dos')->attr->{hidden}, 'DOS prompt is hidden until exit';
       like $dom->at('#dos')->all_text, qr/^C:\\>/, 'DOS prompt';
     };
