@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# warning, this file is generated
+
 use strict;
 use warnings;
 use Plack::Builder;
