@@ -6,7 +6,7 @@ use Importer 'Test2::Tools::HTTP' => ':short';
 use Mojo::DOM58;
 use HTTP::Request::Common;
 
-Test2::Tools::HTTP::http_base_url 'https://turbo-perl.github.io';
+Test2::Tools::HTTP::http_base_url 'https://turboperl.org';
 Test2::Tools::HTTP::Tx->add_helper(
   'res.dom' => sub {
     my($res) = @_;
@@ -31,7 +31,7 @@ foreach my $page (@pages)
   subtest $url => sub {
 
     req(
-      GET("https://turbo-perl.github.io$url"),
+      GET("https://turboperl.org$url"),
       res {
         code $code;
         content_type 'text/html';
@@ -144,7 +144,7 @@ subtest 'assets' => sub {
   foreach my $url (sort keys %assets)
   {
     req(
-      GET("https://turbo-perl.github.io$url"),
+      GET("https://turboperl.org$url"),
       res {
         code 200;
         content_type $assets{$url};
@@ -152,10 +152,10 @@ subtest 'assets' => sub {
     );
   }
 
-  req(GET('https://turbo-perl.github.io/fonts/LICENSE.txt'));
+  req(GET('https://turboperl.org/fonts/LICENSE.txt'));
   like tx->res->decoded_content, qr/Attribution-ShareAlike 4\.0/, 'font license';
 
-  req(GET('https://turbo-perl.github.io/css/turboperl.css'));
+  req(GET('https://turboperl.org/css/turboperl.css'));
   like tx->res->decoded_content, qr{url\("/fonts/WebPlus_IBM_VGA_8x16\.woff"\)}, 'style sheet uses the font';
 };
 

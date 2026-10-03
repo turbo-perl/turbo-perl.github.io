@@ -6,7 +6,7 @@ use Importer 'Test2::Tools::HTTP' => ':short';
 use Mojo::DOM58;
 use HTTP::Request::Common;
 
-Test2::Tools::HTTP::http_base_url 'https://turbo-perl.github.io';
+Test2::Tools::HTTP::http_base_url 'https://turboperl.org';
 Test2::Tools::HTTP::Tx->add_helper(
   'res.dom' => sub {
     my($res) = @_;
@@ -17,7 +17,7 @@ Test2::Tools::HTTP::Tx->add_helper(
 app_add do "./test.psgi";
 
 req(
-  GET('https://turbo-perl.github.io'),
+  GET('https://turboperl.org'),
   res {
     code 200;
   },

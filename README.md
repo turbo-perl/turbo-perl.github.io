@@ -1,6 +1,6 @@
 This is the source for the site:
 
- * [https://turbo-perl.github.io]
+ * [https://turboperl.org]
 
 ## Working on it
 
